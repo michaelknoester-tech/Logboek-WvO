@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Georgia',serif;background:#f5f0e8;color:#0F1C3F;min-height:100vh}
+  :root{--navy:#0F1C3F;--orange:#C85A0A;--cream:#FDF6E3;--light:#E8EDF5}
+
+  .header{background:var(--navy);padding:16px 24px;display:flex;align-items:center;gap:16px;border-bottom:3px solid var(--orange)}
+  .header-text h1{color:#fff;font-size:18px;font-weight:700;letter-spacing:1px}
+  .header-text p{color:#C85A0A;font-size:13px;font-family:Arial,sans-serif;margin-top:2px}
+
+  .tabs{display:flex;background:var(--navy);padding:0 24px}
+  .tab{padding:10px 20px;font-size:13px;font-family:Arial,sans-serif;color:#aaa;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s}
+  .tab.active{color:#fff;border-bottom-color:var(--orange)}
+  .tab:hover:not(.active){color:#fff}
+
+  .content{padding:20px 24px;max-width:900px}
+
+  .form-card{background:#fff;border:1px solid #ddd;border-radius:6px;padding:20px;margin-bottom:16px}
+  .form-card h2{font-size:15px;color:var(--navy);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--orange)}
+
+  .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:12px}
+  .form-group{display:flex;flex-direction:column;gap:4px}
+  .form-group label{font-size:12px;font-family:Arial,sans-serif;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+  input[type=text],input[type=date],input[type=time],textarea{border:1px solid #ccc;border-radius:4px;padding:8px 10px;font-size:14px;font-family:Arial,sans-serif;color:var(--navy);background:#fff;width:100%}
+  input:focus,textarea:focus{outline:none;border-color:var(--orange)}
+  textarea{resize:vertical;min-height:70px;line-height:1.5}
+
+  .systeem-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+  .sys-btn{padding:7px 14px;border:1.5px solid #bbb;border-radius:4px;font-size:13px;font-family:Arial,sans-serif;color:#555;cursor:pointer;background:#fff;transition:all .15s;user-select:none}
+  .sys-btn.selected{background:var(--navy);border-color:var(--navy);color:#fff}
+  .sys-btn:hover:not(.selected){border-color:var(--orange);color:var(--orange)}
+
+  .opgelost-row{display:flex;gap:10px;margin-top:4px}
+  .op-btn{padding:7px 16px;border:1.5px solid #bbb;border-radius:4px;font-size:13px;font-family:Arial,sans-serif;cursor:pointer;background:#fff;transition:all .15s}
+  .op-btn.ja{border-color:#2E7D32;color:#2E7D32}.op-btn.ja.sel{background:#2E7D32;color:#fff}
+  .op-btn.nee{border-color:#7A0000;color:#7A0000}.op-btn.nee.sel{background:#7A0000;color:#fff}
+  .op-btn.behandeling{border-color:var(--orange);color:var(--orange)}.op-btn.behandeling.sel{background:var(--orange);color:#fff}
+
+  .btn-primary{background:var(--orange);color:#fff;border:none;padding:11px 28px;border-radius:4px;font-size:14px;font-family:Georgia,serif;font-weight:700;cursor:pointer;letter-spacing:.5px;margin-top:8px}
+  .btn-primary:hover{background:#a04a08}
+  .btn-secondary{background:transparent;color:var(--navy);border:1.5px solid var(--navy);padding:9px 20px;border-radius:4px;font-size:13px;font-family:Arial,sans-serif;cursor:pointer;margin-top:8px;margin-left:8px}
+  .btn-secondary:hover{background:var(--light)}
+
+  .entries-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .count-badge{background:var(--navy);color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;font-family:Arial,sans-serif}
+
+  .entry-card{background:#fff;border:1px solid #ddd;border-radius:6px;margin-bottom:12px;overflow:hidden}
+  .entry-head{display:grid;grid-template-columns:40px 1fr 1fr 1fr 1fr auto;gap:0;background:var(--light);border-bottom:1px solid #ddd}
+  .entry-head-cell{padding:8px 12px;font-size:12px;font-family:Arial,sans-serif;color:var(--navy)}
+  .entry-nr{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;font-family:Georgia,serif}
+  .entry-sys-tags{display:flex;flex-wrap:wrap;gap:4px;padding:10px 12px 4px}
+  .sys-tag{background:var(--navy);color:#fff;padding:2px 8px;border-radius:3px;font-size:11px;font-family:Arial,sans-serif}
+  .entry-body{padding:0 12px 10px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .entry-section label{font-size:11px;font-family:Arial,sans-serif;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px}
+  .entry-section p{font-size:13px;font-family:Arial,sans-serif;color:var(--navy);line-height:1.5;white-space:pre-wrap}
+  .badge-ja{color:#1B5E20;font-weight:700}.badge-nee{color:#7A0000;font-weight:700}.badge-beh{color:var(--orange);font-weight:700}
+
+  .empty-state{text-align:center;padding:48px 24px;color:#888;font-family:Arial,sans-serif;font-size:14px}
+  .empty-state i{font-size:48px;display:block;margin-bottom:12px;color:#ccc}
+
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:12px 20px;border-radius:6px;font-family:Arial,sans-serif;font-size:13px;border-left:4px solid var(--orange);opacity:0;transition:opacity .3s;pointer-events:none}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-text">
+      <h1>STORINGSLOGBOEK</h1>
+      <p>Willem van Oranje — Technische Afdeling</p>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('nieuw')">Nieuwe melding</div>
+  <div class="tab" onclick="switchTab('overzicht')">Overzicht (<span id="tab-count">0</span>)</div>
+</div>
+
+<div class="content">
+  <div id="tab-nieuw">
+    <div class="form-card">
+      <h2>Storingsmelding</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Datum</label>
+          <input type="date" id="f-datum">
+        </div>
+        <div class="form-group">
+          <label>Tijd</label>
+          <input type="time" id="f-tijd">
+        </div>
+        <div class="form-group">
+          <label>Show nummer</label>
+          <input type="text" id="f-show" placeholder="bijv. 42">
+        </div>
+        <div class="form-group">
+          <label>Storings nr.</label>
+          <input type="text" id="f-snr" placeholder="bijv. S-007">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Systeem</label>
+        <div class="systeem-grid">
+          <div class="sys-btn" data-sys="Tribune" onclick="toggleSys(this)">Tribune</div>
+          <div class="sys-btn" data-sys="Scherm klein binnen" onclick="toggleSys(this)">Scherm klein binnen</div>
+          <div class="sys-btn" data-sys="Scherm groot binnen" onclick="toggleSys(this)">Scherm groot binnen</div>
+          <div class="sys-btn" data-sys="Scherm klein buiten" onclick="toggleSys(this)">Scherm klein buiten</div>
+          <div class="sys-btn" data-sys="Scherm groot buiten" onclick="toggleSys(this)">Scherm groot buiten</div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Omschrijving storing</label>
+        <textarea id="f-omschrijving" placeholder="Beschrijf de storing zo concreet mogelijk..."></textarea>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Ondernomen actie</label>
+        <textarea id="f-actie" placeholder="Welke actie is ondernomen?"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Opgelost?</label>
+          <div class="opgelost-row">
+            <div class="op-btn ja" onclick="toggleOp(this,'Ja')">Ja</div>
+            <div class="op-btn nee" onclick="toggleOp(this,'Nee')">Nee</div>
+            <div class="op-btn behandeling" onclick="toggleOp(this,'In behandeling')">In behandeling</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Naam operator</label>
+          <input type="text" id="f-naam" placeholder="Volledige naam">
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:0">
+        <button class="btn-primary" onclick="saveEntry()">Melding opslaan</button>
+        <button class="btn-secondary" onclick="resetForm()">Leegmaken</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-overzicht" style="display:none">
+    <div class="entries-header">
+      <span style="font-size:14px;font-family:Arial,sans-serif;color:#555">Alle meldingen</span>
+      <span class="count-badge" id="ov-count">0 meldingen</span>
+    </div>
+    <div id="entries-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let selectedSys = [];
+let selectedOp = '';
+let entries = [];
+
+async function loadEntries() {
+  try {
+    const r = await window.storage.get('wvo-storingslog');
+    if (r && r.value) entries = JSON.parse(r.value);
+  } catch(e) { entries = []; }
+  updateCounts();
+}
+
+async function saveEntries() {
+  try {
+    await window.storage.set('wvo-storingslog', JSON.stringify(entries));
+  } catch(e) {}
+}
+
+function toggleSys(el) {
+  const s = el.dataset.sys;
+  if (el.classList.contains('selected')) {
+    el.classList.remove('selected');
+    selectedSys = selectedSys.filter(x => x !== s);
+  } else {
+    el.classList.add('selected');
+    selectedSys.push(s);
+  }
+}
+
+function toggleOp(el, val) {
+  document.querySelectorAll('.op-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedOp = val;
+}
+
+function setToday() {
+  const today = new Date();
+  document.getElementById('f-datum').value = today.toISOString().split('T')[0];
+  const h = String(today.getHours()).padStart(2,'0');
+  const m = String(today.getMinutes()).padStart(2,'0');
+  document.getElementById('f-tijd').value = h+':'+m;
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['nieuw','overzicht'][i] === tab));
+  document.getElementById('tab-nieuw').style.display = tab === 'nieuw' ? '' : 'none';
+  document.getElementById('tab-overzicht').style.display = tab === 'overzicht' ? '' : 'none';
+  if (tab === 'overzicht') renderEntries();
+}
+
+function updateCounts() {
+  document.getElementById('tab-count').textContent = entries.length;
+  document.getElementById('ov-count').textContent = entries.length + ' melding' + (entries.length !== 1 ? 'en' : '');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function saveEntry() {
+  const datum = document.getElementById('f-datum').value;
+  const tijd = document.getElementById('f-tijd').value;
+  const omschrijving = document.getElementById('f-omschrijving').value.trim();
+  if (!datum || !omschrijving) { showToast('Vul minimaal datum en omschrijving in.'); return; }
+  const entry = {
+    id: Date.now(),
+    nr: entries.length + 1,
+    datum, tijd,
+    show: document.getElementById('f-show').value.trim(),
+    snr: document.getElementById('f-snr').value.trim(),
+    systeem: [...selectedSys],
+    omschrijving,
+    actie: document.getElementById('f-actie').value.trim(),
+    opgelost: selectedOp,
+    naam: document.getElementById('f-naam').value.trim(),
+  };
+  entries.unshift(entry);
+  saveEntries();
+  updateCounts();
+  showToast('Melding #' + entry.nr + ' opgeslagen.');
+  resetForm();
+}
+
+function resetForm() {
+  ['f-datum','f-tijd','f-show','f-snr','f-omschrijving','f-actie','f-naam'].forEach(id => document.getElementById(id).value = '');
+  selectedSys = [];
+  selectedOp = '';
+  document.querySelectorAll('.sys-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.op-btn').forEach(b => b.classList.remove('sel'));
+  setToday();
+}
+
+function deleteEntry(id) {
+  entries = entries.filter(e => e.id !== id);
+  saveEntries();
+  updateCounts();
+  renderEntries();
+  showToast('Melding verwijderd.');
+}
+
+function opClass(op) {
+  if (op === 'Ja') return 'badge-ja';
+  if (op === 'Nee') return 'badge-nee';
+  if (op === 'In behandeling') return 'badge-beh';
+  return '';
+}
+
+function renderEntries() {
+  const list = document.getElementById('entries-list');
+  if (!entries.length) {
+    list.innerHTML = '<div class="empty-state"><i class="ti ti-clipboard-list"></i>Nog geen meldingen geregistreerd.</div>';
+    return;
+  }
+  list.innerHTML = entries.map((e,idx) => `
+    <div class="entry-card">
+      <div class="entry-head">
+        <div class="entry-nr">${entries.length - idx}</div>
+        <div class="entry-head-cell"><strong style="font-size:11px;color:#888;display:block;font-family:Arial">Datum</strong>${e.datum || '—'}</div>
+        <div class="entry-head-cell"><strong style="font-size:11px;color:#888;display:block;font-family:Arial">Tijd</strong>${e.tijd || '—'}</div>
+        <div class="entry-head-cell"><strong style="font-size:11px;color:#888;display:block;font-family:Arial">Show nr.</strong>${e.show || '—'}</div>
+        <div class="entry-head-cell"><strong style="font-size:11px;color:#888;display:block;font-family:Arial">Storings nr.</strong>${e.snr || '—'}</div>
+        <div class="entry-head-cell" style="display:flex;align-items:center">
+          <span onclick="deleteEntry(${e.id})" style="cursor:pointer;color:#aaa;font-size:18px;font-family:Arial;padding:4px 8px" title="Verwijderen">✕</span>
+        </div>
+      </div>
+      ${e.systeem && e.systeem.length ? `<div class="entry-sys-tags">${e.systeem.map(s=>`<span class="sys-tag">${s}</span>`).join('')}</div>` : ''}
+      <div class="entry-body" style="padding-top:${e.systeem&&e.systeem.length?'6px':'10px'}">
+        <div class="entry-section">
+          <label>Omschrijving storing</label>
+          <p>${e.omschrijving || '—'}</p>
+        </div>
+        <div class="entry-section">
+          <label>Ondernomen actie</label>
+          <p>${e.actie || '—'}</p>
+        </div>
+        <div class="entry-section">
+          <label>Opgelost</label>
+          <p class="${opClass(e.opgelost)}">${e.opgelost || '—'}</p>
+        </div>
+        <div class="entry-section">
+          <label>Operator</label>
+          <p>${e.naam || '—'}</p>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+loadEntries().then(() => { setToday(); });
+</script>
+</body>
+</html>
