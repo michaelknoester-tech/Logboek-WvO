@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storingslogboek — Willem van Oranje</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Georgia',serif;background:#f5f0e8;color:#0F1C3F;min-height:100vh}
+:root{--navy:#0F1C3F;--orange:#C85A0A;--cream:#FDF6E3;--light:#E8EDF5}
+
+.header{background:var(--navy);padding:18px 32px;border-bottom:3px solid var(--orange);display:flex;align-items:center;justify-content:space-between}
+.header h1{color:#fff;font-size:18px;font-weight:700;letter-spacing:1px}
+.header p{color:#C85A0A;font-size:13px;font-family:Arial,sans-serif;margin-top:2px}
+
+.tabs{display:flex;background:var(--navy);padding:0 32px}
+.tab{padding:10px 20px;font-size:13px;font-family:Arial,sans-serif;color:#aaa;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s}
+.tab.active{color:#fff;border-bottom-color:var(--orange)}
+.tab:hover:not(.active){color:#fff}
+
+.content{padding:24px 32px;max-width:1100px;margin:0 auto}
+
+.form-card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:28px 32px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.form-card h2{font-size:15px;color:var(--navy);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--orange)}
+
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+label.field-label{font-size:12px;font-family:Arial,sans-serif;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+input[type=text],input[type=date],input[type=time],textarea{border:1px solid #ccc;border-radius:4px;padding:8px 10px;font-size:14px;font-family:Arial,sans-serif;color:var(--navy);background:#fff;width:100%}
+input:focus,textarea:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 2px rgba(200,90,10,.15)}
+textarea{resize:vertical;min-height:70px;line-height:1.5}
+
+.systeem-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.sys-btn{padding:7px 14px;border:1.5px solid #bbb;border-radius:4px;font-size:13px;font-family:Arial,sans-serif;color:#555;cursor:pointer;background:#fff;transition:all .15s;user-select:none}
+.sys-btn.selected{background:var(--navy);border-color:var(--navy);color:#fff}
+.sys-btn:hover:not(.selected){border-color:var(--orange);color:var(--orange)}
+
+.opgelost-row{display:flex;gap:10px;margin-top:4px;flex-wrap:wrap}
+.op-btn{padding:7px 16px;border:1.5px solid #bbb;border-radius:4px;font-size:13px;font-family:Arial,sans-serif;cursor:pointer;background:#fff;transition:all .15s}
+.op-btn.ja{border-color:#2E7D32;color:#2E7D32}.op-btn.ja.sel{background:#2E7D32;color:#fff}
+.op-btn.nee{border-color:#7A0000;color:#7A0000}.op-btn.nee.sel{background:#7A0000;color:#fff}
+.op-btn.behandeling{border-color:var(--orange);color:var(--orange)}.op-btn.behandeling.sel{background:var(--orange);color:#fff}
+
+.btn-row{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+.btn-primary{background:var(--orange);color:#fff;border:none;padding:11px 28px;border-radius:4px;font-size:14px;font-family:Georgia,serif;font-weight:700;cursor:pointer;letter-spacing:.5px}
+.btn-primary:hover{background:#a04a08}
+.btn-primary:disabled{background:#ccc;cursor:not-allowed}
+.btn-secondary{background:transparent;color:var(--navy);border:1.5px solid var(--navy);padding:9px 20px;border-radius:4px;font-size:13px;font-family:Arial,sans-serif;cursor:pointer}
+.btn-secondary:hover{background:var(--light)}
+
+.entries-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.count-badge{background:var(--navy);color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;font-family:Arial,sans-serif}
+
+.filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.filter-btn{padding:5px 12px;border:1.5px solid #ccc;border-radius:20px;font-size:12px;font-family:Arial,sans-serif;cursor:pointer;background:#fff;color:#555;transition:all .15s}
+.filter-btn.active{background:var(--navy);border-color:var(--navy);color:#fff}
+.filter-btn:hover:not(.active){border-color:var(--orange)}
+
+.entry-card{background:#fff;border:1px solid #ddd;border-radius:8px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);transition:box-shadow .2s}
+.entry-head{display:grid;grid-template-columns:40px 1fr 1fr 1fr 1fr 36px;background:var(--light);border-bottom:1px solid #ddd}
+.entry-head-cell{padding:8px 12px;font-size:12px;font-family:Arial,sans-serif;color:var(--navy)}
+.entry-nr{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;font-family:Georgia,serif}
+.entry-sys-tags{display:flex;flex-wrap:wrap;gap:4px;padding:10px 12px 4px}
+.sys-tag{background:var(--navy);color:#fff;padding:2px 8px;border-radius:3px;font-size:11px;font-family:Arial,sans-serif}
+.entry-body{padding:6px 12px 12px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.entry-section label{font-size:11px;font-family:Arial,sans-serif;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px}
+.entry-section p{font-size:13px;font-family:Arial,sans-serif;color:var(--navy);line-height:1.5;white-space:pre-wrap}
+.badge-ja{color:#1B5E20;font-weight:700}
+.badge-nee{color:#7A0000;font-weight:700}
+.badge-beh{color:var(--orange);font-weight:700}
+.del-btn{display:flex;align-items:center;justify-content:center;background:none;border:none;color:#bbb;font-size:16px;cursor:pointer}
+.del-btn:hover{color:#7A0000}
+
+.export-btn{background:transparent;color:#555;border:1.5px solid #ccc;padding:7px 16px;border-radius:4px;font-size:12px;font-family:Arial,sans-serif;cursor:pointer}
+.export-btn:hover{border-color:var(--orange);color:var(--orange)}
+
+.empty-state{text-align:center;padding:48px 24px;color:#888;font-family:Arial,sans-serif;font-size:14px}
+
+.loading{text-align:center;padding:32px;color:#888;font-family:Arial,sans-serif;font-size:14px}
+.loading::after{content:'';display:inline-block;width:16px;height:16px;border:2px solid #ddd;border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite;margin-left:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:12px 20px;border-radius:6px;font-family:Arial,sans-serif;font-size:13px;border-left:4px solid var(--orange);opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1}
+.toast.error{border-left-color:#7A0000}
+
+
+
+/* ── DESKTOP ── */
+@media(min-width:769px){
+  .entry-card:hover{box-shadow:0 3px 12px rgba(15,28,63,.12)}
+  .form-row{grid-template-columns:repeat(4,1fr)}
+  .entry-body{grid-template-columns:1fr 1fr 1fr}
+  .sys-btn{padding:8px 16px}
+  .header-right{display:flex;align-items:center;gap:12px}
+  .systeem-grid{gap:10px}
+  textarea{min-height:80px}
+}
+
+/* ── TABLET ── */
+@media(max-width:768px){
+  .content{padding:14px 16px}
+  .header{padding:12px 16px}
+  .header h1{font-size:15px}
+  .tabs{padding:0 16px}
+  .tab{padding:10px 14px;font-size:12px}
+  .form-card{padding:16px}
+  .form-row{grid-template-columns:1fr 1fr}
+  .entry-head{grid-template-columns:36px 1fr 1fr 1fr 28px}
+  .entry-body{grid-template-columns:1fr 1fr}
+  .entries-header{flex-direction:column;align-items:flex-start}
+  .filter-bar{gap:5px}
+  .filter-btn{padding:4px 10px;font-size:11px}
+  .login-box{width:90%;padding:32px 24px}
+}
+
+/* ── MOBIEL ── */
+@media(max-width:480px){
+  .content{padding:12px}
+  .header{padding:10px 14px}
+  .header h1{font-size:14px;letter-spacing:.5px}
+  .header p{font-size:11px}
+  .tabs{padding:0 12px;overflow-x:auto}
+  .tab{padding:9px 12px;font-size:12px;white-space:nowrap}
+  .form-card{padding:14px;border-radius:4px}
+  .form-card h2{font-size:14px;margin-bottom:10px}
+  .form-row{grid-template-columns:1fr}
+  .form-group{margin-bottom:0}
+  input[type=text],input[type=date],input[type=time],textarea{font-size:16px;padding:10px}
+  .systeem-grid{gap:7px}
+  .sys-btn{padding:9px 12px;font-size:13px;flex:1;min-width:calc(50% - 4px);text-align:center}
+  .opgelost-row{gap:6px}
+  .op-btn{padding:9px 12px;font-size:13px;flex:1;text-align:center}
+  .btn-row{flex-direction:column}
+  .btn-primary{width:100%;padding:13px;font-size:15px}
+  .btn-secondary{width:100%;padding:11px;text-align:center}
+  .entry-head{grid-template-columns:32px 1fr 1fr 28px}
+  .entry-head-cell:nth-child(4),.entry-head-cell:nth-child(5){display:none}
+  .entry-head-cell{padding:7px 8px;font-size:11px}
+  .entry-nr{font-size:12px}
+  .entry-body{grid-template-columns:1fr;padding:8px 10px 10px;gap:8px}
+  .entry-sys-tags{padding:8px 10px 2px;gap:4px}
+  .sys-tag{font-size:10px;padding:2px 6px}
+  .entry-section p{font-size:13px}
+  .filter-bar{gap:5px}
+  .filter-btn{padding:5px 9px;font-size:11px}
+  .entries-header{gap:6px}
+  .count-badge{font-size:11px}
+  .export-btn{font-size:11px;padding:6px 12px}
+  .toast{bottom:12px;right:12px;left:12px;font-size:12px}
+  .login-box{width:92%;padding:28px 20px}
+  .login-box h2{font-size:18px}
+  .login-box input{font-size:16px;padding:12px}
+  .login-box button{padding:13px;font-size:15px}
+}
+
+.login-overlay{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{background:#fff;border-radius:8px;padding:40px 36px;width:340px;text-align:center;border-top:4px solid var(--orange)}
+.login-box h2{font-size:20px;color:var(--navy);margin-bottom:4px}
+.login-box p{font-size:13px;font-family:Arial,sans-serif;color:#888;margin-bottom:24px}
+.login-box input{width:100%;border:1px solid #ccc;border-radius:4px;padding:10px 14px;font-size:15px;font-family:Arial,sans-serif;color:var(--navy);margin-bottom:12px;text-align:center;letter-spacing:2px}
+.login-box input:focus{outline:none;border-color:var(--orange)}
+.login-box button{width:100%;background:var(--orange);color:#fff;border:none;padding:11px;border-radius:4px;font-size:15px;font-family:Georgia,serif;font-weight:700;cursor:pointer}
+.login-box button:hover{background:#a04a08}
+.login-error{color:#7A0000;font-size:13px;font-family:Arial,sans-serif;margin-top:8px;min-height:18px}
+</style>
+</head>
+<body>
+
+
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <h2>Storingslogboek</h2>
+    <p>Willem van Oranje — Technische Afdeling</p>
+    <input type="password" id="pw-input" placeholder="Wachtwoord" onkeydown="if(event.key==='Enter')checkPw()">
+    <button onclick="checkPw()">Inloggen</button>
+    <div class="login-error" id="pw-error"></div>
+  </div>
+</div>
+
+<div class="header">
+  <div>
+    <h1>STORINGSLOGBOEK</h1>
+    <p>Willem van Oranje — Technische Afdeling</p>
+  </div>
+  <div class="header-right" style="display:none" id="header-right">
+    <span id="sync-status" style="font-size:12px;font-family:Arial,sans-serif;color:#aaa"></span>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('nieuw')">Nieuwe melding</div>
+  <div class="tab" onclick="switchTab('overzicht')">Overzicht (<span id="tab-count">—</span>)</div>
+</div>
+
+<div class="content">
+
+  <div id="tab-nieuw">
+    <div class="form-card">
+      <h2>Storingsmelding</h2>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="field-label">Datum</label>
+          <input type="date" id="f-datum">
+        </div>
+        <div class="form-group">
+          <label class="field-label">Tijd</label>
+          <input type="time" id="f-tijd">
+        </div>
+        <div class="form-group">
+          <label class="field-label">Show nummer</label>
+          <input type="text" id="f-show" placeholder="bijv. 42">
+        </div>
+        <div class="form-group">
+          <label class="field-label">Storings nr.</label>
+          <input type="text" id="f-snr" placeholder="bijv. S-007">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="field-label">Systeem</label>
+        <div class="systeem-grid">
+          <div class="sys-btn" data-sys="Algemeen" onclick="toggleSys(this)">Algemeen</div>
+          <div class="sys-btn" data-sys="Tribune" onclick="toggleSys(this)">Tribune</div>
+          <div class="sys-btn" data-sys="Scherm klein binnen" onclick="toggleSys(this)">Scherm klein binnen</div>
+          <div class="sys-btn" data-sys="Scherm groot binnen" onclick="toggleSys(this)">Scherm groot binnen</div>
+          <div class="sys-btn" data-sys="Scherm klein buiten" onclick="toggleSys(this)">Scherm klein buiten</div>
+          <div class="sys-btn" data-sys="Scherm groot buiten" onclick="toggleSys(this)">Scherm groot buiten</div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="field-label">Omschrijving storing</label>
+        <textarea id="f-omschrijving" placeholder="Beschrijf de storing zo concreet mogelijk..."></textarea>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="field-label">Ondernomen actie</label>
+        <textarea id="f-actie" placeholder="Welke actie is ondernomen?"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="field-label">Opgelost?</label>
+          <div class="opgelost-row">
+            <div class="op-btn ja" onclick="toggleOp(this,'Ja')">Ja</div>
+            <div class="op-btn nee" onclick="toggleOp(this,'Nee')">Nee</div>
+            <div class="op-btn behandeling" onclick="toggleOp(this,'In behandeling')">In behandeling</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="field-label">Naam operator</label>
+          <input type="text" id="f-naam" placeholder="Volledige naam">
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" id="save-btn" onclick="saveEntry()">Melding opslaan</button>
+        <button class="btn-secondary" onclick="resetForm()">Leegmaken</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-overzicht" style="display:none">
+    <div class="entries-header">
+      <div class="filter-bar">
+        <div class="filter-btn active" data-filter="alle" onclick="setFilter(this,'alle')">Alle</div>
+        <div class="filter-btn" data-filter="Tribune" onclick="setFilter(this,'Tribune')">Tribune</div>
+        <div class="filter-btn" data-filter="Scherm klein binnen" onclick="setFilter(this,'Scherm klein binnen')">Klein binnen</div>
+        <div class="filter-btn" data-filter="Scherm groot binnen" onclick="setFilter(this,'Scherm groot binnen')">Groot binnen</div>
+        <div class="filter-btn" data-filter="Scherm klein buiten" onclick="setFilter(this,'Scherm klein buiten')">Klein buiten</div>
+        <div class="filter-btn" data-filter="Scherm groot buiten" onclick="setFilter(this,'Scherm groot buiten')">Groot buiten</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="export-btn" onclick="exportCSV()">↓ Export CSV</button>
+        <span class="count-badge" id="ov-count">—</span>
+      </div>
+    </div>
+    <div id="entries-list"><div class="loading">Meldingen laden</div></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://ggqgzsxgbjpaxzqjpsae.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_ClmDmqt0WqX6NeKArh0ubw_dGEMb9c5';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let entries = [];
+let selectedSys = [];
+let selectedOp = '';
+let activeFilter = 'alle';
+
+// ── INIT ──
+async function init() {
+  setToday();
+  await loadEntries();
+}
+
+async function loadEntries() {
+  try {
+    const { data, error } = await db
+      .from('meldingen')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    entries = data || [];
+    updateCounts();
+    updateSyncStatus();
+  } catch(e) {
+    showToast('Verbindingsfout: ' + e.message, true);
+  }
+}
+
+// ── FORM ──
+function toggleSys(el) {
+  const s = el.dataset.sys;
+  el.classList.toggle('selected');
+  if (el.classList.contains('selected')) selectedSys.push(s);
+  else selectedSys = selectedSys.filter(x => x !== s);
+}
+
+function toggleOp(el, val) {
+  document.querySelectorAll('.op-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedOp = val;
+}
+
+function setToday() {
+  const now = new Date();
+  document.getElementById('f-datum').value = now.toISOString().split('T')[0];
+  document.getElementById('f-tijd').value = now.toTimeString().slice(0,5);
+}
+
+function resetForm() {
+  ['f-datum','f-tijd','f-show','f-snr','f-omschrijving','f-actie','f-naam']
+    .forEach(id => document.getElementById(id).value = '');
+  selectedSys = [];
+  selectedOp = '';
+  document.querySelectorAll('.sys-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.op-btn').forEach(b => b.classList.remove('sel'));
+  setToday();
+}
+
+async function saveEntry() {
+  const datum = document.getElementById('f-datum').value;
+  const omschrijving = document.getElementById('f-omschrijving').value.trim();
+  if (!datum || !omschrijving) { showToast('Vul minimaal datum en omschrijving in.', true); return; }
+
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Opslaan...';
+
+  const record = {
+    datum,
+    tijd:         document.getElementById('f-tijd').value,
+    show_nr:      document.getElementById('f-show').value.trim(),
+    storings_nr:  document.getElementById('f-snr').value.trim(),
+    systeem:      selectedSys,
+    omschrijving,
+    actie:        document.getElementById('f-actie').value.trim(),
+    opgelost:     selectedOp,
+    naam:         document.getElementById('f-naam').value.trim(),
+  };
+
+  try {
+    const { error } = await db.from('meldingen').insert(record);
+    if (error) throw error;
+    showToast('Melding opgeslagen.');
+    resetForm();
+    await loadEntries();
+  } catch(e) {
+    showToast('Opslaan mislukt: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Melding opslaan';
+  }
+}
+
+async function deleteEntry(id) {
+  if (!confirm('Melding verwijderen?')) return;
+  try {
+    const { error } = await db.from('meldingen').delete().eq('id', id);
+    if (error) throw error;
+    showToast('Melding verwijderd.');
+    await loadEntries();
+    renderEntries();
+  } catch(e) {
+    showToast('Verwijderen mislukt: ' + e.message, true);
+  }
+}
+
+// ── OVERZICHT ──
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) =>
+    t.classList.toggle('active', ['nieuw','overzicht'][i] === tab));
+  document.getElementById('tab-nieuw').style.display = tab === 'nieuw' ? '' : 'none';
+  document.getElementById('tab-overzicht').style.display = tab === 'overzicht' ? '' : 'none';
+  if (tab === 'overzicht') { loadEntries().then(renderEntries); }
+}
+
+function setFilter(el, filter) {
+  activeFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.filter === filter));
+  renderEntries();
+}
+
+function updateCounts() {
+  document.getElementById('tab-count').textContent = entries.length;
+  document.getElementById('ov-count').textContent =
+    entries.length + ' melding' + (entries.length !== 1 ? 'en' : '');
+}
+
+function opClass(op) {
+  if (op === 'Ja') return 'badge-ja';
+  if (op === 'Nee') return 'badge-nee';
+  if (op === 'In behandeling') return 'badge-beh';
+  return '';
+}
+
+function renderEntries() {
+  const list = document.getElementById('entries-list');
+  const filtered = activeFilter === 'alle'
+    ? entries
+    : entries.filter(e => e.systeem && e.systeem.includes(activeFilter));
+
+  document.getElementById('ov-count').textContent =
+    filtered.length + ' melding' + (filtered.length !== 1 ? 'en' : '');
+
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty-state">Geen meldingen gevonden.</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map((e, idx) => `
+    <div class="entry-card">
+      <div class="entry-head">
+        <div class="entry-nr">${filtered.length - idx}</div>
+        <div class="entry-head-cell">
+          <strong style="font-size:10px;color:#888;display:block;font-family:Arial">Datum / Tijd</strong>
+          ${e.datum || '—'}${e.tijd ? ' · ' + e.tijd : ''}
+        </div>
+        <div class="entry-head-cell">
+          <strong style="font-size:10px;color:#888;display:block;font-family:Arial">Show nr.</strong>
+          ${e.show_nr || '—'}
+        </div>
+        <div class="entry-head-cell">
+          <strong style="font-size:10px;color:#888;display:block;font-family:Arial">Storings nr.</strong>
+          ${e.storings_nr || '—'}
+        </div>
+        <div class="entry-head-cell">
+          <strong style="font-size:10px;color:#888;display:block;font-family:Arial">Operator</strong>
+          ${e.naam || '—'}
+        </div>
+        <button class="del-btn" onclick="deleteEntry(${e.id})" title="Verwijderen">✕</button>
+      </div>
+      ${e.systeem && e.systeem.length
+        ? `<div class="entry-sys-tags">${e.systeem.map(s=>`<span class="sys-tag">${s}</span>`).join('')}</div>`
+        : ''}
+      <div class="entry-body">
+        <div class="entry-section">
+          <label>Omschrijving storing</label>
+          <p>${e.omschrijving || '—'}</p>
+        </div>
+        <div class="entry-section">
+          <label>Ondernomen actie</label>
+          <p>${e.actie || '—'}</p>
+        </div>
+        <div class="entry-section">
+          <label>Opgelost</label>
+          <p class="${opClass(e.opgelost)}">${e.opgelost || '—'}</p>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function exportCSV() {
+  if (!entries.length) { showToast('Geen meldingen om te exporteren.', true); return; }
+  const header = ['Datum','Tijd','Show nr.','Storings nr.','Systeem','Omschrijving','Actie','Opgelost','Operator'];
+  const rows = entries.map(e => [
+    e.datum, e.tijd, e.show_nr, e.storings_nr,
+    (e.systeem||[]).join(' + '),
+    e.omschrijving, e.actie, e.opgelost, e.naam
+  ].map(v => '"' + (v||'').replace(/"/g,'""') + '"'));
+  const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = 'storingslogboek-wvo.csv';
+  a.click();
+  showToast('CSV geëxporteerd.');
+}
+
+function updateSyncStatus() {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const now = new Date();
+  el.textContent = 'Gesynchroniseerd ' + now.toLocaleTimeString('nl-NL', {hour:'2-digit',minute:'2-digit'});
+}
+
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+
+const PASSWORD = 'Wvo2026';
+const SESSION_KEY = 'wvo-auth';
+
+function checkPw() {
+  const val = document.getElementById('pw-input').value;
+  if (val === PASSWORD) {
+    sessionStorage.setItem(SESSION_KEY, '1');
+    document.getElementById('login-overlay').style.display = 'none';
+  } else {
+    document.getElementById('pw-error').textContent = 'Onjuist wachtwoord.';
+    document.getElementById('pw-input').value = '';
+  }
+}
+
+function checkAuth() {
+  if (sessionStorage.getItem(SESSION_KEY) !== '1') {
+    document.getElementById('login-overlay').style.display = 'flex';
+  } else {
+    document.getElementById('login-overlay').style.display = 'none';
+  }
+}
+
+checkAuth();
+init().then(() => { document.getElementById('header-right').style.display='flex'; updateSyncStatus(); });
+</script>
+</body>
+</html>
